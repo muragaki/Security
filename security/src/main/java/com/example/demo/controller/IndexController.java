@@ -5,6 +5,8 @@ import com.example.demo.service.AccountService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +18,7 @@ import java.util.List;
 @Slf4j
 public class IndexController {
 	  private final AccountService accountService;
-
+	  String MAV_ERRORS = "errors";
 	  public IndexController(AccountService accountService) {
 	    this.accountService = accountService;
 	  }
@@ -43,11 +45,24 @@ public class IndexController {
 	   * @return index (redirect)
 	   */
 	  @PostMapping(value = "signup")
-	  public String signup(@ModelAttribute("signup") SignupForm signupForm, RedirectAttributes redirectAttributes) {
+	  public String signup(@Validated @ModelAttribute("signup") SignupForm signupForm, BindingResult br, RedirectAttributes redirectAttributes) {
+		if (br.hasErrors()) {
+			setFlashAttributeErrors(redirectAttributes, br);
+			return "redirect:/";
+		}
 	    // TODO 暫定的に2つのロールを付与する
 	    String[] roles = {"ROLE_USER", "ROLE_ADMIN"};
 	    accountService.register(signupForm.getName(), signupForm.getEmail(), signupForm.getPassword(), roles);
 	    redirectAttributes.addFlashAttribute("successMessage", "アカウントの登録が完了しました");
 	    return "redirect:/";
 	  }
+	    /**
+	     * リダイレクト先に入力エラーを渡します。
+	     *
+	     * @param attributes
+	     * @param result
+	     */
+	    public void setFlashAttributeErrors(RedirectAttributes attributes, BindingResult result) {
+	        attributes.addFlashAttribute(MAV_ERRORS, result);
+	    }
 }
